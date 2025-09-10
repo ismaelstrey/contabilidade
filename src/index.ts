@@ -2,6 +2,8 @@ import { ApiException, fromHono } from "chanfana";
 import { Hono } from "hono";
 import { tasksRouter } from "./endpoints/tasks/router";
 import { authRouter } from "./endpoints/auth/router";
+import { servicosRouter } from "./endpoints/servicos/router";
+import { contatosRouter } from "./endpoints/contatos/router";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { DummyEndpoint } from "./endpoints/dummyEndpoint";
 
@@ -54,6 +56,12 @@ openapi.route("/api/v1", authRouter);
 
 // Register Tasks Sub router
 openapi.route("/tasks", tasksRouter);
+
+// Register servicos routes
+openapi.route("/api/v1/servicos", servicosRouter);
+
+// Register contatos routes
+openapi.route("/api/v1/contatos", contatosRouter);
 
 // Register other endpoints
 openapi.post("/dummy/:slug", DummyEndpoint);
