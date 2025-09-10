@@ -1,72 +1,220 @@
-# OpenAPI Template
+# Sistema de Contabilidade - API
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/chanfana-openapi-template)
 
-![OpenAPI Template Preview](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/91076b39-1f5b-46f6-7f14-536a6f183000/public)
+![Sistema de Contabilidade Preview](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/91076b39-1f5b-46f6-7f14-536a6f183000/public)
 
-<!-- dash-content-start -->
+## Sobre o Projeto
 
-This is a Cloudflare Worker with OpenAPI 3.1 Auto Generation and Validation using [chanfana](https://github.com/cloudflare/chanfana) and [Hono](https://github.com/honojs/hono).
+Este é um sistema completo de API para contabilidade desenvolvido com Cloudflare Workers, OpenAPI 3.1, [chanfana](https://github.com/cloudflare/chanfana) e [Hono](https://github.com/honojs/hono).
 
-This is an example project made to be used as a quick start into building OpenAPI compliant Workers that generates the
-`openapi.json` schema automatically from code and validates the incoming request to the defined parameters or request body.
+O sistema oferece funcionalidades completas para gerenciamento de:
+- **Serviços** - Cadastro e gerenciamento de serviços oferecidos
+- **Contatos** - Sistema de contato com clientes e leads
+- **Testimonials** - Depoimentos de clientes com suporte a imagens
+- **Autenticação** - Sistema JWT com controle de acesso baseado em roles
+- **Rate Limiting** - Proteção contra abuso de endpoints públicos
 
-This template includes various endpoints, a D1 database, and integration tests using [Vitest](https://vitest.dev/) as examples. In endpoints, you will find [chanfana D1 AutoEndpoints](https://chanfana.com/endpoints/auto/d1) and a [normal endpoint](https://chanfana.com/endpoints/defining-endpoints) to serve as examples for your projects.
+## Funcionalidades Principais
 
-Besides being able to see the OpenAPI schema (openapi.json) in the browser, you can also extract the schema locally no hassle by running this command `npm run schema`.
+### 🔐 Autenticação e Autorização
+- Sistema JWT completo com refresh tokens
+- Controle de acesso baseado em roles (admin/user)
+- Middleware de autenticação para endpoints protegidos
+- Hash seguro de senhas com bcrypt
 
-<!-- dash-content-end -->
+### 📋 Gerenciamento de Serviços
+- CRUD completo para serviços
+- Validação de dados com Zod
+- Controle de status (ativo/inativo)
+- Endpoints protegidos para administradores
 
-> [!IMPORTANT]
-> When using C3 to create this project, select "no" when it asks if you want to deploy. You need to follow this project's [setup steps](https://github.com/cloudflare/templates/tree/main/openapi-template#setup-steps) before deploying.
+### 📞 Sistema de Contatos
+- Endpoint público para recebimento de contatos
+- Validação de telefone brasileiro
+- Relacionamento com serviços
+- Rate limiting para prevenir spam
+- Gerenciamento administrativo de contatos
 
-## Getting Started
+### ⭐ Testimonials
+- Sistema completo de depoimentos
+- Suporte a upload de imagens
+- Sistema de avaliação (1-5 estrelas)
+- Endpoint público para criação
+- Gerenciamento administrativo
 
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+### 🛡️ Segurança
+- Rate limiting configurável por endpoint
+- Validação rigorosa de dados de entrada
+- Sanitização de conteúdo
+- Headers de segurança
 
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/openapi-template
-```
+## Tecnologias Utilizadas
 
-A live public deployment of this template is available at [https://openapi-template.templates.workers.dev](https://openapi-template.templates.workers.dev)
+- **Runtime**: Cloudflare Workers
+- **Framework**: Hono.js
+- **OpenAPI**: Chanfana (geração automática de schema)
+- **Banco de Dados**: Cloudflare D1 (SQLite)
+- **Validação**: Zod
+- **Autenticação**: JWT + bcrypt
+- **Testes**: Vitest
+- **TypeScript**: Tipagem completa
 
-## Setup Steps
+## Estrutura da API
 
-1. Install the project dependencies with a package manager of your choice:
+### Endpoints Disponíveis
+
+#### Autenticação
+- `POST /api/v1/auth/login` - Login de usuário
+- `POST /api/v1/auth/refresh` - Renovar token JWT
+
+#### Serviços
+- `GET /api/v1/servicos` - Listar serviços (público)
+- `POST /api/v1/servicos` - Criar serviço (admin)
+- `GET /api/v1/servicos/:id` - Obter serviço específico (público)
+- `PUT /api/v1/servicos/:id` - Atualizar serviço (admin)
+- `DELETE /api/v1/servicos/:id` - Deletar serviço (admin)
+
+#### Contatos
+- `POST /api/v1/contatos` - Criar contato (público, rate limited)
+- `GET /api/v1/contatos` - Listar contatos (admin)
+- `GET /api/v1/contatos/:id` - Obter contato específico (admin)
+- `PUT /api/v1/contatos/:id` - Atualizar status do contato (admin)
+
+#### Testimonials
+- `POST /api/v1/testimonials` - Criar testimonial (público, rate limited)
+- `GET /api/v1/testimonials` - Listar testimonials (público)
+- `GET /api/v1/testimonials/:id` - Obter testimonial específico (público)
+- `PUT /api/v1/testimonials/:id` - Atualizar testimonial (admin)
+- `DELETE /api/v1/testimonials/:id` - Deletar testimonial (admin)
+
+## Configuração e Instalação
+
+### Pré-requisitos
+- Node.js 18+
+- pnpm (recomendado) ou npm
+- Conta Cloudflare com Workers habilitado
+
+### Passos de Instalação
+
+1. **Clone o projeto e instale dependências:**
    ```bash
-   npm install
+   git clone <repository-url>
+   cd contabilidade
+   pnpm install
    ```
-2. Create a [D1 database](https://developers.cloudflare.com/d1/get-started/) with the name "openapi-template-db":
+
+2. **Configure o banco de dados D1:**
    ```bash
-   npx wrangler d1 create openapi-template-db
+   npx wrangler d1 create contabilidade-db
    ```
-   ...and update the `database_id` field in `wrangler.json` with the new database ID.
-3. Run the following db migration to initialize the database (notice the `migrations` directory in this project):
+   Atualize o `database_id` no arquivo `wrangler.jsonc` com o ID retornado.
+
+3. **Configure as variáveis de ambiente:**
    ```bash
-   npx wrangler d1 migrations apply DB --remote
+   # No wrangler.jsonc, adicione:
+   "vars": {
+     "JWT_SECRET": "sua_chave_secreta_jwt_muito_forte_aqui",
+     "SALT_ROUNDS": "12"
+   }
    ```
-4. Deploy the project!
+
+4. **Execute as migrações do banco:**
+   ```bash
+   npx wrangler d1 migrations apply contabilidade-db --remote
+   ```
+
+5. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   pnpm dev
+   ```
+
+6. **Deploy para produção:**
    ```bash
    npx wrangler deploy
    ```
-5. Monitor your worker
-   ```bash
-   npx wrangler tail
-   ```
 
-## Testing
+## Desenvolvimento
 
-This template includes integration tests using [Vitest](https://vitest.dev/). To run the tests locally:
-
+### Executar Localmente
 ```bash
-npm run test
+pnpm dev
+```
+O servidor estará disponível em `http://localhost:8787`
+
+### Executar Testes
+```bash
+pnpm test
 ```
 
-Test files are located in the `tests/` directory, with examples demonstrating how to test your endpoints and database interactions.
+### Gerar Schema OpenAPI
+```bash
+pnpm run schema
+```
 
-## Project structure
+### Estrutura do Projeto
 
-1. Your main router is defined in `src/index.ts`.
-2. Each endpoint has its own file in `src/endpoints/`.
-3. Integration tests are located in the `tests/` directory.
-4. For more information read the [chanfana documentation](https://chanfana.com/), [Hono documentation](https://hono.dev/docs), and [Vitest documentation](https://vitest.dev/guide/).
+```
+src/
+├── endpoints/          # Definição dos endpoints
+│   ├── auth/          # Autenticação
+│   ├── servicos/      # Gerenciamento de serviços
+│   ├── contatos/      # Sistema de contatos
+│   └── testimonials/  # Sistema de testimonials
+├── middleware/        # Middlewares (auth, rate limiting)
+├── utils/            # Utilitários (auth, upload de imagens)
+├── types.ts          # Definições de tipos TypeScript
+└── index.ts          # Router principal
+
+migrations/           # Migrações do banco de dados
+tests/               # Testes de integração
+```
+
+## Banco de Dados
+
+O sistema utiliza Cloudflare D1 (SQLite) com as seguintes tabelas:
+
+- **users** - Usuários do sistema
+- **servicos** - Serviços oferecidos
+- **contatos** - Contatos de clientes
+- **testimonials** - Depoimentos de clientes
+- **tasks** - Sistema de tarefas (exemplo)
+
+## Segurança
+
+- Todas as senhas são hasheadas com bcrypt
+- Tokens JWT com expiração configurável
+- Rate limiting em endpoints públicos
+- Validação rigorosa de entrada de dados
+- Sanitização de conteúdo HTML
+- Headers de segurança configurados
+
+## Monitoramento
+
+```bash
+# Monitorar logs em tempo real
+npx wrangler tail
+
+# Ver métricas
+npx wrangler metrics
+```
+
+## Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## Documentação Adicional
+
+- [Chanfana Documentation](https://chanfana.com/)
+- [Hono Documentation](https://hono.dev/docs)
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- [Cloudflare D1](https://developers.cloudflare.com/d1/)
+- [Vitest Documentation](https://vitest.dev/guide/)
