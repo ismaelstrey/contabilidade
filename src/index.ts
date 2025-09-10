@@ -4,6 +4,7 @@ import { tasksRouter } from "./endpoints/tasks/router";
 import { authRouter } from "./endpoints/auth/router";
 import { servicosRouter } from "./endpoints/servicos/router";
 import { contatosRouter } from "./endpoints/contatos/router";
+import { testimonialsRouter } from "./endpoints/testimonials/router";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { DummyEndpoint } from "./endpoints/dummyEndpoint";
 
@@ -51,10 +52,10 @@ openapi.registry.registerComponent('securitySchemes', 'bearerAuth', {
   description: 'Token JWT obtido através do endpoint de login',
 });
 
-// Register Auth Sub router
+// Register routes
 openapi.route("/api/v1", authRouter);
 
-// Register Tasks Sub router
+// Register tasks routes
 openapi.route("/tasks", tasksRouter);
 
 // Register servicos routes
@@ -62,6 +63,9 @@ openapi.route("/api/v1/servicos", servicosRouter);
 
 // Register contatos routes
 openapi.route("/api/v1/contatos", contatosRouter);
+
+// Register testimonials routes
+openapi.route("/api/v1/testimonials", testimonialsRouter);
 
 // Register other endpoints
 openapi.post("/dummy/:slug", DummyEndpoint);
