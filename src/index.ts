@@ -1,5 +1,6 @@
 import { ApiException, fromHono } from "chanfana";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { tasksRouter } from "./endpoints/tasks/router";
 import { authRouter } from "./endpoints/auth/router";
 import { servicosRouter } from "./endpoints/servicos/router";
@@ -10,6 +11,19 @@ import { DummyEndpoint } from "./endpoints/dummyEndpoint";
 
 // Start a Hono app
 const app = new Hono<{ Bindings: Env }>();
+
+// Configure CORS middleware
+app.use('*', cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://contabilidadeigrejinha.com.br' // Substitua pela URL do seu frontend em produção
+  ],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
 
 app.onError((err, c) => {
   if (err instanceof ApiException) {
