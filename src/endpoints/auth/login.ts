@@ -116,7 +116,8 @@ export class AuthLogin extends OpenAPIRoute {
       // Verificar senha
       const isPasswordValid = await verifyPassword(
         validatedData.senha,
-        user.senha as string
+        user.senha as string,
+        c.env.SALT_ROUNDS
       );
 
       if (!isPasswordValid) {

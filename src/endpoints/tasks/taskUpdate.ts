@@ -13,4 +13,11 @@ export class TaskUpdate extends D1UpdateEndpoint<HandleArgs> {
       due_date: true,
     }),
   };
+
+  public schema = {
+    security: [{ bearerAuth: [] }],
+    tags: ["Tasks"],
+    summary: "Atualiza uma task",
+    description: "Atualiza os dados de uma task específica do usuário autenticado",
+  };
 }

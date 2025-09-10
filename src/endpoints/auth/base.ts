@@ -37,7 +37,7 @@ export const userResponse = user.omit({ senha: true });
 
 // Schema para payload do JWT
 export const jwtPayload = z.object({
-  sub: z.number().int(), // user id
+  sub: z.string(), // user id (string conforme padrão JWT)
   email: z.string().email(),
   role: z.enum(["admin", "user", "viewer"]),
   iat: z.number(),

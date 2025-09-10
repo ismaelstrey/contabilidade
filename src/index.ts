@@ -34,11 +34,19 @@ const openapi = fromHono(app, {
   docs_url: "/",
   schema: {
     info: {
-      title: "My Awesome API",
+      title: "API Sistema de Contabilidade",
       version: "2.0.0",
-      description: "This is the documentation for my awesome API.",
+      description: "API completa para sistema de contabilidade com autenticação JWT.",
     },
   },
+});
+
+// Add security schemes to the OpenAPI schema
+openapi.registry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+  description: 'Token JWT obtido através do endpoint de login',
 });
 
 // Register Auth Sub router

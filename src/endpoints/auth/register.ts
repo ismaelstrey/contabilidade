@@ -88,7 +88,7 @@ export class AuthRegister extends OpenAPIRoute {
       }
 
       // Hash da senha
-      const hashedPassword = await hashPassword(validatedData.senha);
+      const hashedPassword = await hashPassword(validatedData.senha, c.env.SALT_ROUNDS);
 
       // Inserir usuário no banco
       const result = await c.env.DB.prepare(`

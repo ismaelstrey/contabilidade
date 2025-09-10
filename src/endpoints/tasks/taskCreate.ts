@@ -14,4 +14,11 @@ export class TaskCreate extends D1CreateEndpoint<HandleArgs> {
       due_date: true,
     }),
   };
+
+  public schema = {
+    security: [{ bearerAuth: [] }],
+    tags: ["Tasks"],
+    summary: "Cria uma nova task",
+    description: "Cria uma nova task para o usuário autenticado",
+  };
 }

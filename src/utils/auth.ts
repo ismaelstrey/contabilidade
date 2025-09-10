@@ -6,10 +6,10 @@ import { JwtPayload } from '../endpoints/auth/base';
  * @param password Senha em texto plano
  * @returns Hash da senha
  */
-export async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string, salt?: string): Promise<string> {
   // Usando Web Crypto API disponível no Cloudflare Workers
   const encoder = new TextEncoder();
-  const data = encoder.encode(password + process.env.SALT_ROUNDS || 'default_salt');
+  const data = encoder.encode(password + (salt || 'default_salt'));
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -21,8 +21,8 @@ export async function hashPassword(password: string): Promise<string> {
  * @param hash Hash armazenado
  * @returns True se a senha estiver correta
  */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password);
+export async function verifyPassword(password: string, hash: string, salt?: string): Promise<boolean> {
+  const passwordHash = await hashPassword(password, salt);
   return passwordHash === hash;
 }
 

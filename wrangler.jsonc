@@ -6,6 +6,10 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "JWT_SECRET": "sua_chave_secreta_jwt_muito_forte_aqui_123456789",
+    "SALT_ROUNDS": "contabilidade_salt_2025"
+  },
   "d1_databases": [
     {
       "binding": "DB",
