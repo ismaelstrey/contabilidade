@@ -1,5 +1,4 @@
 import type { Context } from "hono";
-import type { UserResponse } from "./endpoints/auth/base";
 
 // Tipos de usuário autenticado
 export interface AuthenticatedUser {
@@ -26,7 +25,7 @@ export interface AuthMiddlewareContext {
 }
 
 // Tipos para respostas da API
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;

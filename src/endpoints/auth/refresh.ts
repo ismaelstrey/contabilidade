@@ -19,62 +19,44 @@ export class AuthRefresh extends OpenAPIRoute {
     responses: {
       '200': {
         description: 'Token renovado com sucesso',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                data: {
-                  type: 'object',
-                  properties: {
-                    user: userResponse,
-                    token: { type: 'string' },
-                    refreshToken: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: z.boolean(),
+            message: z.string(),
+            data: z.object({
+              user: userResponse,
+              token: z.string(),
+              refreshToken: z.string(),
+            }),
+          })
+        ),
       },
       '400': {
         description: 'Dados inválidos',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                errors: { type: 'array', items: { type: 'string' } },
-              },
-            },
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: z.boolean(),
+            message: z.string(),
+            errors: z.array(z.string()),
+          })
+        ),
       },
       '401': {
         description: 'Refresh token inválido',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: z.boolean(),
+            message: z.string(),
+          })
+        ),
       },
     },
   };
 
-  public async handle(c: AppContext) {
+  public async handle(c: AppContext): Promise<object> {
     try {
       // Validar dados de entrada
-      const validatedData = this.getValidatedData<typeof this.schema>();
+      const validatedData = await this.getValidatedData<typeof this.schema>();
 
       // Verificar refresh token
       const userId = await verifyRefreshToken(
@@ -111,7 +93,7 @@ export class AuthRefresh extends OpenAPIRoute {
       const jwtSecret = c.env.JWT_SECRET;
       const token = await generateJWT(
         {
-          sub: user.id as number,
+          sub: (user.id as number).toString(),
           email: user.email as string,
           role: user.role as 'admin' | 'user' | 'viewer',
         },
@@ -143,15 +125,16 @@ export class AuthRefresh extends OpenAPIRoute {
         },
         200
       );
-    } catch (error: any) {
-      console.error('Erro ao renovar token:', error);
+    } catch (error: unknown) {
+      // Error handling (removed console.error for ESLint compliance)
 
-      if (error.name === 'ZodError') {
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        const zodError = error as unknown as { errors: Array<{ path: string[]; message: string }> };
         return c.json(
           {
             success: false,
             message: 'Dados inválidos',
-            errors: error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`),
+            errors: zodError.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
           },
           400
         );

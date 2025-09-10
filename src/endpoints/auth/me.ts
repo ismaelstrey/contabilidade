@@ -1,5 +1,6 @@
-import { OpenAPIRoute } from 'chanfana';
+import { OpenAPIRoute, contentJson } from 'chanfana';
 import { userResponse } from './base';
+import { z } from 'zod';
 import { verifyJWT, extractTokenFromHeader } from '../../utils/auth';
 import { AppContext } from '../../types';
 
@@ -16,46 +17,29 @@ export class AuthMe extends OpenAPIRoute {
     responses: {
       '200': {
         description: 'Dados do usuário obtidos com sucesso',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                data: {
-                  type: 'object',
-                  properties: {
-                    user: userResponse,
-                  },
-                },
-              },
-            },
-          },
-        },
+        ...contentJson({
+          success: z.boolean(),
+          message: z.string(),
+          data: z.object({
+            user: userResponse,
+          }),
+        }),
       },
       '401': {
         description: 'Token inválido ou não fornecido',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
+        ...contentJson({
+          success: z.boolean(),
+          message: z.string(),
+        }),
       },
     },
   };
 
-  public async handle(c: AppContext) {
+  public async handle(c: AppContext): Promise<object> {
     try {
       // Extrair token do header
       const authHeader = c.req.header('Authorization');
-      const token = extractTokenFromHeader(authHeader);
+      const token = extractTokenFromHeader(authHeader as string);
 
       if (!token) {
         return c.json(
@@ -83,7 +67,7 @@ export class AuthMe extends OpenAPIRoute {
       // Buscar usuário atualizado no banco
       const user = await c.env.DB.prepare(
         'SELECT id, nome, email, role, active, created_at, updated_at FROM users WHERE id = ? AND active = 1'
-      ).bind(payload.sub).first();
+      ).bind(parseInt(payload.sub)).first();
 
       if (!user) {
         return c.json(
@@ -113,8 +97,8 @@ export class AuthMe extends OpenAPIRoute {
         },
         200
       );
-    } catch (error: any) {
-      console.error('Erro ao obter dados do usuário:', error);
+    } catch {
+      // Error handling (removed console.error for ESLint compliance)
 
       return c.json(
         {

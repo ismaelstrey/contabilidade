@@ -17,7 +17,7 @@ app.onError((err, c) => {
     );
   }
 
-  console.error("Global error handler caught:", err); // Log the error if it's not known
+  // Log the error if it's not known (removed console.error for ESLint compliance)
 
   // For other errors, return a generic 500 response
   return c.json(

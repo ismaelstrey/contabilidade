@@ -49,7 +49,7 @@ export const UserModel = {
   tableName: "users",
   primaryKeys: ["id"],
   schema: user,
-  serializer: (obj: Record<string, string | number | boolean>) => {
+  serializer: (obj: Record<string, string | number | boolean | null>): object => {
     return {
       ...obj,
       active: Boolean(obj.active),

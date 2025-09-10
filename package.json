@@ -1,5 +1,7 @@
 {
   "name": "contabilidade",
+  "version": "0.0.0",
+  "type": "module",
   "description": "Complete backend API template using Hono + Chanfana + D1 + Vitest.",
   "private": true,
   "cloudflare": {
@@ -25,7 +27,10 @@
     "predeploy": "wrangler d1 migrations apply DB --remote",
     "seedLocalDb": "wrangler d1 migrations apply DB --local",
     "schema": "npx chanfana",
-    "test": "wrangler deploy --dry-run && npx vitest run --config tests/vitest.config.mts"
+    "test": "wrangler deploy --dry-run && npx vitest run --config tests/vitest.config.mts",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint:check": "eslint src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
     "@cloudflare/itty-router-openapi": "^1.1.1",
@@ -36,7 +41,14 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.71",
+    "@eslint/js": "^9.35.0",
     "@types/node": "24.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "eslint": "^9.35.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^7.2.1",
     "typescript": "5.8.3",
     "wrangler": "4.21.x"
   }

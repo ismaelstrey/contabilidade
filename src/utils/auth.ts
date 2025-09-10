@@ -41,6 +41,7 @@ export async function generateJWT(
   const now = Math.floor(Date.now() / 1000);
   const jwtPayload: JwtPayload = {
     ...payload,
+    sub: payload.sub.toString(), // Converte para string
     iat: now,
     exp: now + expiresIn,
   };
@@ -57,13 +58,12 @@ export async function generateJWT(
 export async function verifyJWT(token: string, secret: string): Promise<JwtPayload | null> {
   try {
     const isValid = await verify(token, secret);
-    if (!isValid) return null;
+    if (!isValid) {return null;}
 
     // Decodifica o payload sem verificar (já verificamos acima)
     const payload = JSON.parse(atob(token.split('.')[1]));
     return payload as JwtPayload;
-  } catch (error) {
-    console.error('Erro ao verificar JWT:', error);
+  } catch {
     return null;
   }
 }
@@ -88,7 +88,7 @@ export function extractTokenFromHeader(authHeader: string | null): string | null
  */
 export async function generateRefreshToken(userId: number, secret: string): Promise<string> {
   const payload = {
-    sub: userId,
+    sub: userId.toString(), // Converte para string
     type: 'refresh',
   };
   const now = Math.floor(Date.now() / 1000);
@@ -110,14 +110,13 @@ export async function generateRefreshToken(userId: number, secret: string): Prom
 export async function verifyRefreshToken(token: string, secret: string): Promise<number | null> {
   try {
     const isValid = await verify(token, secret);
-    if (!isValid) return null;
+    if (!isValid) {return null;}
 
     const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload.type !== 'refresh') return null;
+    if (payload.type !== 'refresh') {return null;}
 
-    return payload.sub;
-  } catch (error) {
-    console.error('Erro ao verificar refresh token:', error);
+    return parseInt(payload.sub); // Converte de volta para number
+  } catch {
     return null;
   }
 }

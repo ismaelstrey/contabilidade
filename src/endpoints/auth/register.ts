@@ -1,5 +1,6 @@
 import { OpenAPIRoute, contentJson } from 'chanfana';
-import { userRegister, userResponse, UserRegister } from './base';
+import { z } from 'zod';
+import { userRegister, userResponse } from './base';
 import { hashPassword, generateJWT, generateRefreshToken } from '../../utils/auth';
 import { AppContext } from '../../types';
 
@@ -14,59 +15,41 @@ export class AuthRegister extends OpenAPIRoute {
     responses: {
       '201': {
         description: 'Usuário criado com sucesso',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                data: {
-                  type: 'object',
-                  properties: {
-                    user: userResponse,
-                    token: { type: 'string' },
-                    refreshToken: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: z.boolean(),
+            message: z.string(),
+            data: z.object({
+              user: userResponse,
+              token: z.string(),
+              refreshToken: z.string(),
+            }),
+          })
+        ),
       },
       '400': {
         description: 'Dados inválidos',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-                errors: { type: 'array', items: { type: 'string' } },
-              },
-            },
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: z.boolean(),
+            message: z.string(),
+            errors: z.array(z.string()),
+          })
+        ),
       },
       '409': {
         description: 'Email já existe',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                success: { type: 'boolean' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
+        ...contentJson(
+          z.object({
+            success: z.boolean(),
+            message: z.string(),
+          })
+        ),
       },
     },
   };
 
-  public async handle(c: AppContext) {
+  public async handle(c: AppContext): Promise<object> {
     try {
       // Validar dados de entrada
       const data = await this.getValidatedData<typeof this.schema>();
@@ -119,7 +102,7 @@ export class AuthRegister extends OpenAPIRoute {
       const jwtSecret = c.env.JWT_SECRET;
       const token = await generateJWT(
         {
-          sub: newUser.id as number,
+          sub: (newUser.id as number).toString(),
           email: newUser.email as string,
           role: newUser.role as 'admin' | 'user' | 'viewer',
         },
@@ -151,15 +134,16 @@ export class AuthRegister extends OpenAPIRoute {
         },
         201
       );
-    } catch (error: any) {
-      console.error('Erro no registro:', error);
+    } catch (error: unknown) {
+      // Error handling (removed console.error for ESLint compliance)
 
-      if (error.name === 'ZodError') {
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        const zodError = error as unknown as { errors: Array<{ path: string[]; message: string }> };
         return c.json(
           {
             success: false,
             message: 'Dados inválidos',
-            errors: error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`),
+            errors: zodError.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
           },
           400
         );

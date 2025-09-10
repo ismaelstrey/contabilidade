@@ -1,5 +1,5 @@
 import { verifyJWT, extractTokenFromHeader } from '../utils/auth';
-import { JwtPayload } from '../endpoints/auth/base';
+import { AuthenticatedUser } from '../types';
 
 /**
  * Middleware de autenticação JWT
@@ -7,8 +7,8 @@ import { JwtPayload } from '../endpoints/auth/base';
  */
 export async function authMiddleware(
   request: Request,
-  env: any,
-  ctx: ExecutionContext
+  env: Env,
+  _ctx: ExecutionContext
 ): Promise<Response | void> {
   // Extrair token do header Authorization
   const authHeader = request.headers.get('Authorization');
@@ -48,14 +48,20 @@ export async function authMiddleware(
   // Verificar se usuário ainda existe e está ativo
   const user = await env.DB.prepare(
     'SELECT id, nome, email, role, active FROM users WHERE id = ?'
-  ).bind(payload.sub).first();
+  ).bind(parseInt(payload.sub)).first() as {
+    id: number;
+    nome: string;
+    email: string;
+    role: 'admin' | 'user' | 'viewer';
+    active: number;
+  } | null;
 
   if (!user || !user.active) {
     return new Response(
       JSON.stringify({
         success: false,
         message: 'Usuário não encontrado ou inativo',
-        code: 'USER_INACTIVE',
+        code: 'USER_NOT_FOUND',
       }),
       {
         status: 401,
@@ -66,7 +72,7 @@ export async function authMiddleware(
 
   // Adicionar dados do usuário ao request para uso posterior
   // Usando uma propriedade customizada no request
-  (request as any).user = {
+  (request as Request & { user?: AuthenticatedUser | null }).user = {
     id: user.id,
     nome: user.nome,
     email: user.email,
@@ -85,10 +91,10 @@ export async function authMiddleware(
 export function requireRole(allowedRoles: string[]) {
   return async function(
     request: Request,
-    env: any,
-    ctx: ExecutionContext
+    _env: Env,
+    _ctx: ExecutionContext
   ): Promise<Response | void> {
-    const user = (request as any).user;
+    const user = (request as Request & { user?: AuthenticatedUser | null }).user;
 
     if (!user) {
       return new Response(
@@ -129,15 +135,15 @@ export function requireRole(allowedRoles: string[]) {
  */
 export async function optionalAuthMiddleware(
   request: Request,
-  env: any,
-  ctx: ExecutionContext
+  env: Env,
+  _ctx: ExecutionContext
 ): Promise<Response | void> {
   const authHeader = request.headers.get('Authorization');
   const token = extractTokenFromHeader(authHeader);
 
   if (!token) {
     // Sem token, mas não bloqueia
-    (request as any).user = null;
+    (request as Request & { user?: AuthenticatedUser | null }).user = null;
     return;
   }
 
@@ -147,10 +153,16 @@ export async function optionalAuthMiddleware(
     if (payload) {
       const user = await env.DB.prepare(
         'SELECT id, nome, email, role, active FROM users WHERE id = ? AND active = 1'
-      ).bind(payload.sub).first();
+      ).bind(parseInt(payload.sub)).first() as {
+        id: number;
+        nome: string;
+        email: string;
+        role: 'admin' | 'user' | 'viewer';
+        active: number;
+      } | null;
 
       if (user) {
-        (request as any).user = {
+        (request as Request & { user?: AuthenticatedUser | null }).user = {
           id: user.id,
           nome: user.nome,
           email: user.email,
@@ -158,14 +170,14 @@ export async function optionalAuthMiddleware(
           active: Boolean(user.active),
         };
       } else {
-        (request as any).user = null;
+        (request as Request & { user?: AuthenticatedUser | null }).user = null;
       }
     } else {
-      (request as any).user = null;
+      (request as Request & { user?: AuthenticatedUser | null }).user = null;
     }
-  } catch (error) {
-    console.error('Erro no middleware de autenticação opcional:', error);
-    (request as any).user = null;
+  } catch {
+    // Error handling (removed console.error for ESLint compliance)
+    (request as Request & { user?: AuthenticatedUser | null }).user = null;
   }
 
   return;
@@ -174,8 +186,8 @@ export async function optionalAuthMiddleware(
 /**
  * Utilitário para obter o usuário atual do request
  */
-export function getCurrentUser(request: Request): any | null {
-  return (request as any).user || null;
+export function getCurrentUser(request: Request): AuthenticatedUser | null {
+  return (request as Request & { user?: AuthenticatedUser | null }).user || null;
 }
 
 /**
@@ -183,7 +195,7 @@ export function getCurrentUser(request: Request): any | null {
  */
 export function hasRole(request: Request, role: string): boolean {
   const user = getCurrentUser(request);
-  return user && user.role === role;
+  return Boolean(user && user.role === role);
 }
 
 /**
@@ -191,5 +203,5 @@ export function hasRole(request: Request, role: string): boolean {
  */
 export function hasAnyRole(request: Request, roles: string[]): boolean {
   const user = getCurrentUser(request);
-  return user && roles.includes(user.role);
+  return Boolean(user && roles.includes(user.role));
 }
