@@ -18,7 +18,10 @@ app.use('*', cors({
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:4173',
-    'https://contabilidadeigrejinha.com.br' // Substitua pela URL do seu frontend em produção
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:4173',
+    'https://contabilidadeigrejinha.com.br',
+    'https://jaque.contabilidadeigrejinha.com.br'
   ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],

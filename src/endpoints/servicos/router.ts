@@ -5,8 +5,20 @@ import { ServicoCreate } from './servicoCreate';
 import { ServicoRead } from './servicoRead';
 import { ServicoUpdate } from './servicoUpdate';
 import { ServicoDelete } from './servicoDelete';
+import { requireHonoAuth } from '../../middleware/honoAuth';
 
-export const servicosRouter = fromHono(new Hono());
+const app = new Hono<{ Bindings: Env }>();
+
+app.use("*", async (c, next) => {
+  if (c.req.method === "GET") {
+    await next();
+    return;
+  }
+
+  return requireHonoAuth(["admin", "user"])(c, next);
+});
+
+export const servicosRouter = fromHono(app);
 
 // Registrar endpoints CRUD de serviços
 servicosRouter.get("/", ServicoList);

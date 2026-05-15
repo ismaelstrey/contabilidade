@@ -5,11 +5,21 @@ import { ContatoList } from './contatoList';
 import { ContatoRead } from './contatoRead';
 import { ContatoUpdateStatus } from './contatoUpdateStatus';
 import { rateLimiter } from '../../middleware/rateLimiting';
+import { requireHonoAuth } from '../../middleware/honoAuth';
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Env }>();
 
 // Aplicar rate limiting apenas ao endpoint público de criação
 app.use("/", rateLimiter(5, 60000)); // 5 requests por minuto
+
+app.use("*", async (c, next) => {
+  if (c.req.method === "POST") {
+    await next();
+    return;
+  }
+
+  return requireHonoAuth(["admin", "user"])(c, next);
+});
 
 export const contatosRouter = fromHono(app);
 
