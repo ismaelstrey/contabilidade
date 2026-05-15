@@ -6,6 +6,7 @@ import { authRouter } from "./endpoints/auth/router";
 import { servicosRouter } from "./endpoints/servicos/router";
 import { contatosRouter } from "./endpoints/contatos/router";
 import { testimonialsRouter } from "./endpoints/testimonials/router";
+import { analyticsRouter } from "./endpoints/analytics/router";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { DummyEndpoint } from "./endpoints/dummyEndpoint";
 
@@ -83,6 +84,9 @@ openapi.route("/api/v1/contatos", contatosRouter);
 
 // Register testimonials routes
 openapi.route("/api/v1/testimonials", testimonialsRouter);
+
+// Register analytics routes
+openapi.route("/api/v1/analytics", analyticsRouter);
 
 // Register other endpoints
 openapi.post("/dummy/:slug", DummyEndpoint);
