@@ -1,14 +1,15 @@
-import { Context, Next } from "hono";
+import { Context, MiddlewareHandler, Next } from "hono";
 
 // Armazenamento em memória para rate limiting (em produção, usar Redis ou similar)
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
+let cleanupCursor = 0;
 
 /**
  * Middleware de rate limiting simples
  * @param maxRequests Número máximo de requests por janela de tempo
  * @param windowMs Janela de tempo em milissegundos
  */
-export function rateLimiter(maxRequests: number = 5, windowMs: number = 60000) {
+export function rateLimiter(maxRequests: number = 5, windowMs: number = 60000): MiddlewareHandler {
   return async (c: Context, next: Next) => {
     const clientIP = c.req.header("cf-connecting-ip") || 
                      c.req.header("x-forwarded-for") || 
@@ -19,7 +20,9 @@ export function rateLimiter(maxRequests: number = 5, windowMs: number = 60000) {
     const key = `rate_limit:${clientIP}`;
     
     // Executar limpeza ocasional do cache (a cada 100 requests aproximadamente)
-    if (Math.random() < 0.01) {
+    cleanupCursor++;
+    if (cleanupCursor >= 100) {
+      cleanupCursor = 0;
       cleanupRateLimitCache();
     }
     
@@ -64,7 +67,7 @@ export function rateLimiter(maxRequests: number = 5, windowMs: number = 60000) {
  * Limpeza do cache de rate limiting
  * Remove entradas expiradas para evitar vazamento de memória
  */
-function cleanupRateLimitCache() {
+function cleanupRateLimitCache(): void {
   const now = Date.now();
   for (const [key, data] of requestCounts.entries()) {
     if (now > data.resetTime) {

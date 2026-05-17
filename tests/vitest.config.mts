@@ -23,6 +23,9 @@ export default defineWorkersConfig({
           compatibilityFlags: ["experimental", "nodejs_compat"],
           bindings: {
             MIGRATIONS: migrations,
+            JWT_SECRET: "test_jwt_secret",
+            SALT_ROUNDS: "test_salt",
+            TURNSTILE_SECRET_KEY: "",
           },
         },
       },

@@ -2,6 +2,11 @@ import { D1CreateEndpoint } from 'chanfana';
 import { HandleArgs } from '../../types';
 import { TestimonialModel } from './base';
 
+type TestimonialCreateData = {
+  created_at?: string;
+  updated_at?: string;
+};
+
 /**
  * Endpoint para criação de testimonials
  * POST /testimonials
@@ -25,7 +30,7 @@ export class TestimonialCreate extends D1CreateEndpoint<HandleArgs> {
     description: 'Cria um novo testimonial no sistema. Endpoint público.',
   };
 
-  async beforeCreate(data: any) {
+  async beforeCreate(data: TestimonialCreateData): Promise<TestimonialCreateData> {
     // Adiciona timestamps manualmente já que removemos o trigger do banco
     const now = new Date().toISOString();
     data.created_at = now;

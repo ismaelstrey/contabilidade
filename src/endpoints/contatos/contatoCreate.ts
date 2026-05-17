@@ -2,6 +2,12 @@ import { D1CreateEndpoint } from "chanfana";
 import { HandleArgs } from "../../types";
 import { ContatoModel, formatarTelefone } from "./base";
 
+type ContactCreateData = {
+  servico_id: number;
+  telefone: string;
+  status?: string;
+};
+
 /**
  * Endpoint público para criação de contatos
  * POST /contatos
@@ -26,7 +32,7 @@ export class ContatoCreate extends D1CreateEndpoint<HandleArgs> {
     description: "Endpoint público para criação de contatos através do formulário do site",
   };
 
-  async beforeCreate(c: HandleArgs, data: any) {
+  async beforeCreate(c: HandleArgs, data: ContactCreateData): Promise<ContactCreateData> {
     // Verificar se o serviço existe e está ativo
     const servico = await c[0].env.DB.prepare(
       "SELECT id, nome FROM servicos WHERE id = ? AND ativo = 1"

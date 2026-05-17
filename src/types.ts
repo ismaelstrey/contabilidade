@@ -5,7 +5,7 @@ export interface AuthenticatedUser {
   id: number;
   nome: string;
   email: string;
-  role: 'admin' | 'user' | 'viewer';
+  role: 'admin' | 'editor' | 'user' | 'viewer';
   active: boolean;
 }
 
