@@ -104,7 +104,7 @@ export class AuthRegister extends OpenAPIRoute {
         {
           sub: (newUser.id as number).toString(),
           email: newUser.email as string,
-          role: newUser.role as 'admin' | 'user' | 'viewer',
+          role: newUser.role as 'admin' | 'editor' | 'user' | 'viewer',
         },
         jwtSecret
       );

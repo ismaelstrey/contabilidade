@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { requireHonoAuth } from "../../middleware/honoAuth";
 import { getCurrentUser } from "../../middleware/auth";
 import { auditLog, jsonSuccess, slugify } from "../../utils/cms";
+import { hashPassword } from "../../utils/auth";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -45,8 +46,25 @@ type ArticlePayload = {
   publishedAt?: string | null;
 };
 
+type UserPayload = {
+  nome?: string;
+  email?: string;
+  senha?: string;
+  role?: "admin" | "editor" | "user" | "viewer";
+  ativo?: boolean;
+  active?: boolean;
+};
+
 const parseBody = async <T>(request: Request): Promise<T> => {
   return await request.json() as T;
+};
+
+const requireAdminUser = (request: Request): Response | null => {
+  const user = getCurrentUser(request);
+  if (user?.role !== "admin") {
+    return Response.json({ success: false, message: "Acesso restrito a administradores" }, { status: 403 });
+  }
+  return null;
 };
 
 const serviceSelect = `
@@ -209,6 +227,111 @@ app.delete("/services/:id", async (c) => {
   await c.env.DB.prepare("DELETE FROM servicos WHERE id = ?").bind(id).run();
   await auditLog(c.req.raw, c.env, "delete", "service", id);
   return c.json(jsonSuccess("Servico removido com sucesso", { id }));
+});
+
+app.get("/users", async (c) => {
+  const denied = requireAdminUser(c.req.raw);
+  if (denied) {return denied;}
+
+  const search = c.req.query("search");
+  const role = c.req.query("role");
+  const where: string[] = [];
+  const bindings: string[] = [];
+  if (search) {
+    where.push("(nome LIKE ? OR email LIKE ?)");
+    bindings.push(`%${search}%`, `%${search}%`);
+  }
+  if (role && role !== "all") {
+    where.push("role = ?");
+    bindings.push(role);
+  }
+
+  const { results } = await c.env.DB.prepare(
+    `SELECT id, nome, email, role, active, created_at, updated_at
+     FROM users ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY created_at DESC LIMIT 200`
+  ).bind(...bindings).all();
+
+  return c.json(jsonSuccess("Usuarios carregados com sucesso", results));
+});
+
+app.post("/users", async (c) => {
+  const denied = requireAdminUser(c.req.raw);
+  if (denied) {return denied;}
+
+  const payload = await parseBody<UserPayload>(c.req.raw);
+  if (!payload.nome?.trim() || !payload.email?.trim() || !payload.senha || payload.senha.length < 8) {
+    return c.json({ success: false, message: "Nome, email e senha com 8+ caracteres sao obrigatorios" }, 400);
+  }
+
+  const existing = await c.env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(payload.email.trim()).first();
+  if (existing) {return c.json({ success: false, message: "Email ja cadastrado" }, 409);}
+
+  const passwordHash = await hashPassword(payload.senha, c.env.SALT_ROUNDS);
+  const role = payload.role || "viewer";
+  const result = await c.env.DB.prepare(
+    `INSERT INTO users (nome, email, senha, role, active, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+  ).bind(payload.nome.trim(), payload.email.trim(), passwordHash, role, payload.ativo === false || payload.active === false ? 0 : 1).run();
+  await auditLog(c.req.raw, c.env, "create", "user", result.meta.last_row_id, { email: payload.email, role });
+  return c.json(jsonSuccess("Usuario criado com sucesso", { id: result.meta.last_row_id }), 201);
+});
+
+app.put("/users/:id", async (c) => {
+  const denied = requireAdminUser(c.req.raw);
+  if (denied) {return denied;}
+
+  const id = Number(c.req.param("id"));
+  const payload = await parseBody<UserPayload>(c.req.raw);
+  if (!payload.nome?.trim() || !payload.email?.trim()) {
+    return c.json({ success: false, message: "Nome e email sao obrigatorios" }, 400);
+  }
+
+  const role = payload.role || "viewer";
+  const active = payload.ativo === false || payload.active === false ? 0 : 1;
+  if (payload.senha && payload.senha.length >= 8) {
+    const passwordHash = await hashPassword(payload.senha, c.env.SALT_ROUNDS);
+    await c.env.DB.prepare(
+      `UPDATE users SET nome = ?, email = ?, senha = ?, role = ?, active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    ).bind(payload.nome.trim(), payload.email.trim(), passwordHash, role, active, id).run();
+  } else {
+    await c.env.DB.prepare(
+      `UPDATE users SET nome = ?, email = ?, role = ?, active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    ).bind(payload.nome.trim(), payload.email.trim(), role, active, id).run();
+  }
+  await auditLog(c.req.raw, c.env, "update", "user", id, { email: payload.email, role, active });
+  return c.json(jsonSuccess("Usuario atualizado com sucesso", { id }));
+});
+
+app.delete("/users/:id", async (c) => {
+  const denied = requireAdminUser(c.req.raw);
+  if (denied) {return denied;}
+
+  const id = Number(c.req.param("id"));
+  const current = getCurrentUser(c.req.raw);
+  if (current?.id === id) {
+    return c.json({ success: false, message: "Voce nao pode remover o proprio usuario" }, 400);
+  }
+  await c.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id).run();
+  await auditLog(c.req.raw, c.env, "delete", "user", id);
+  return c.json(jsonSuccess("Usuario removido com sucesso", { id }));
+});
+
+app.put("/profile", async (c) => {
+  const current = getCurrentUser(c.req.raw);
+  if (!current) {return c.json({ success: false, message: "Usuario nao autenticado" }, 401);}
+  const payload = await parseBody<{ nome?: string; email?: string }>(c.req.raw);
+  if (!payload.nome?.trim() || !payload.email?.trim()) {
+    return c.json({ success: false, message: "Nome e email sao obrigatorios" }, 400);
+  }
+  await c.env.DB.prepare(
+    "UPDATE users SET nome = ?, email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+  ).bind(payload.nome.trim(), payload.email.trim(), current.id).run();
+  const user = await c.env.DB.prepare(
+    "SELECT id, nome, email, role, active, created_at, updated_at FROM users WHERE id = ?"
+  ).bind(current.id).first();
+  await auditLog(c.req.raw, c.env, "update", "profile", current.id);
+  return c.json(jsonSuccess("Perfil atualizado com sucesso", user));
 });
 
 app.get("/article-categories", async (c) => {
