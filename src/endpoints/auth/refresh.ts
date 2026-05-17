@@ -95,7 +95,7 @@ export class AuthRefresh extends OpenAPIRoute {
         {
           sub: (user.id as number).toString(),
           email: user.email as string,
-          role: user.role as 'admin' | 'user' | 'viewer',
+          role: user.role as 'admin' | 'editor' | 'user' | 'viewer',
         },
         jwtSecret
       );
