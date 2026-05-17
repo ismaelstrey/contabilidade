@@ -1,20 +1,23 @@
 {
-  "compatibility_date": "2025-04-01",
+  "compatibility_date": "2025-09-06",
   "main": "src/index.ts",
   "name": "contabilidade",
   "upload_source_maps": true,
   "observability": {
-    "enabled": true
-  },
-  "vars": {
-    "JWT_SECRET": "sua_chave_secreta_jwt_muito_forte_aqui_123456789",
-    "SALT_ROUNDS": "contabilidade_salt_2025"
+    "enabled": true,
+    "head_sampling_rate": 1
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "openapi-template-db",
       "database_id": "a6e33081-bcba-4792-913c-382cb4e898f9"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "contabilidade-media"
     }
   ]
 }

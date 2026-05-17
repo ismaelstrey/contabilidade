@@ -52,7 +52,7 @@ export async function authMiddleware(
     id: number;
     nome: string;
     email: string;
-    role: 'admin' | 'user' | 'viewer';
+    role: 'admin' | 'editor' | 'user' | 'viewer';
     active: number;
   } | null;
 
@@ -157,7 +157,7 @@ export async function optionalAuthMiddleware(
         id: number;
         nome: string;
         email: string;
-        role: 'admin' | 'user' | 'viewer';
+    role: 'admin' | 'editor' | 'user' | 'viewer';
         active: number;
       } | null;
 

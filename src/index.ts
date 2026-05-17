@@ -7,6 +7,8 @@ import { servicosRouter } from "./endpoints/servicos/router";
 import { contatosRouter } from "./endpoints/contatos/router";
 import { testimonialsRouter } from "./endpoints/testimonials/router";
 import { analyticsRouter } from "./endpoints/analytics/router";
+import { publicRouter } from "./endpoints/public/router";
+import { adminRouter } from "./endpoints/admin/router";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { DummyEndpoint } from "./endpoints/dummyEndpoint";
 
@@ -55,8 +57,8 @@ const openapi = fromHono(app, {
   docs_url: "/",
   schema: {
     info: {
-      title: "API Sistema de Contabilidade",
-      version: "2.0.0",
+      title: "API Contabilidade Igrejinha",
+      version: "3.0.0",
       description: "API completa para sistema de contabilidade com autenticação JWT.",
     },
   },
@@ -87,6 +89,10 @@ openapi.route("/api/v1/testimonials", testimonialsRouter);
 
 // Register analytics routes
 openapi.route("/api/v1/analytics", analyticsRouter);
+
+// Register new public and admin API surfaces
+app.route("/api/v1/public", publicRouter);
+app.route("/api/v1/admin", adminRouter);
 
 // Register other endpoints
 openapi.post("/dummy/:slug", DummyEndpoint);

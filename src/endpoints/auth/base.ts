@@ -6,8 +6,8 @@ export const user = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
   email: z.string().email("Email deve ter formato válido").max(255, "Email deve ter no máximo 255 caracteres"),
   senha: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
-  role: z.enum(["admin", "user", "viewer"], {
-    errorMap: () => ({ message: "Role deve ser admin, user ou viewer" })
+  role: z.enum(["admin", "editor", "user", "viewer"], {
+    errorMap: () => ({ message: "Role deve ser admin, editor, user ou viewer" })
   }),
   active: z.boolean(),
   created_at: z.string().datetime(),
@@ -21,8 +21,8 @@ export const userRegister = z.object({
   senha: z.string()
     .min(8, "Senha deve ter pelo menos 8 caracteres")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Senha deve conter pelo menos 1 maiúscula, 1 minúscula e 1 número"),
-  role: z.enum(["admin", "user", "viewer"], {
-    errorMap: () => ({ message: "Role deve ser admin, user ou viewer" })
+  role: z.enum(["admin", "editor", "user", "viewer"], {
+    errorMap: () => ({ message: "Role deve ser admin, editor, user ou viewer" })
   }).default("user"),
 });
 
@@ -39,7 +39,7 @@ export const userResponse = user.omit({ senha: true });
 export const jwtPayload = z.object({
   sub: z.string(), // user id (string conforme padrão JWT)
   email: z.string().email(),
-  role: z.enum(["admin", "user", "viewer"]),
+  role: z.enum(["admin", "editor", "user", "viewer"]),
   iat: z.number(),
   exp: z.number(),
 });

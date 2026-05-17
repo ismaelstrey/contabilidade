@@ -2,6 +2,10 @@ import { D1UpdateEndpoint } from 'chanfana';
 import { HandleArgs } from '../../types';
 import { TestimonialModel } from './base';
 
+type TestimonialUpdateData = {
+  updated_at?: string;
+};
+
 /**
  * Endpoint para atualização de testimonials
  * PUT /testimonials/:id
@@ -26,7 +30,7 @@ export class TestimonialUpdate extends D1UpdateEndpoint<HandleArgs> {
     description: 'Atualiza um testimonial existente. Requer autenticação com role admin.',
   };
 
-  async beforeUpdate(data: any) {
+  async beforeUpdate(data: TestimonialUpdateData): Promise<TestimonialUpdateData> {
     // Adiciona updated_at manualmente já que removemos o trigger do banco
     data.updated_at = new Date().toISOString();
     return data;
