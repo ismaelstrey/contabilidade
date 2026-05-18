@@ -9,6 +9,7 @@ import { testimonialsRouter } from "./endpoints/testimonials/router";
 import { analyticsRouter } from "./endpoints/analytics/router";
 import { publicRouter } from "./endpoints/public/router";
 import { adminRouter } from "./endpoints/admin/router";
+import { registerManualOpenApiRoutes } from "./openapi/manualRoutes";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { DummyEndpoint } from "./endpoints/dummyEndpoint";
 
@@ -71,6 +72,8 @@ openapi.registry.registerComponent('securitySchemes', 'bearerAuth', {
   bearerFormat: 'JWT',
   description: 'Token JWT obtido através do endpoint de login',
 });
+
+registerManualOpenApiRoutes(openapi.registry);
 
 // Register routes
 openapi.route("/api/v1", authRouter);
